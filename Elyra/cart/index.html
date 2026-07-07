@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Cart</title>
+</head>
+<body>
+    <div id="navbar"></div>
+    <div id="items" class="p-4 sm:p-10 max-w-5xl mx-auto"></div>
+    <div id="footer"></div>
+    <script src="/static/loadnav.js"></script>
+    <script type="module" src="/static/addToCart.js"></script>
+    <script type="module">
+        import { viewItems } from "/static/viewCart.js";
+
+        window.addEventListener("DOMContentLoaded", () => {
+            viewItems();
+        });
+    </script>
+    <script src="/static/loadfooter.js"></script>
+</body>
+</html>

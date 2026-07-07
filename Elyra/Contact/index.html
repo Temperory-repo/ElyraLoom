@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Elyra Loom</title>
+</head>
+<body class="bg-[url(/static/py.png)] bg-center bg-no-repeat bg-cover">
+    <div id="navbar"></div>
+
+    <main class="flex justify-center items-center min-h-screen py-10">
+        <form action="" id="connectForm" autocomplete="off" class="flex flex-col backdrop-blur-xl justify-center items-center h-auto border border-stone-400 rounded-4xl w-11/12 max-w-lg md:max-w-xl gap-6 sm:gap-12 backdrop-blur-xl p-4">
+            <h1 class="text-center text-3xl sm:text-5xl font-bold pt-10 text-white">Connect Form</h1>
+            <input type="text" id="username" placeholder="User Name" required class="h-auto w-3/4 rounded-2xl px-6 text-white focus:outline-none transition-all text-lg">
+            
+            <input type="email" id="email" placeholder="Email" required class="h-auto w-3/4 rounded-2xl px-6 text-white focus:outline-none transition-all text-lg">
+            <p id="emailError" class="hidden h-5 text-sm text-red-400 font-medium w-3/4 text-left"></p>
+            
+            <input type="tel" maxlength="10" id="phone" placeholder="Phone" required class="h-auto w-3/4 rounded-2xl px-6 text-white focus:outline-none transition-all text-lg">
+            <p id="phoneError" class="hidden h-5 text-sm text-red-400 font-medium w-3/4 text-left"></p>
+
+            <textarea maxlength="1500" id="message" placeholder="write your message here..." class="h-auto w-3/4 rounded-3xl px-6 text-white focus:outline-none transition-all text-lg resize-none"></textarea>
+
+            <button type="button" class="cursor-pointer text-white hover:text-green-400 text-xl font-semibold mb-10 rounded-2xl p-3 transition-all" onclick="connect()">
+                Submit
+            </button>
+        </form>
+
+        <div id="msgbox" class="hidden fixed inset-0 flex justify-center items-center bg-transparent backdrop-blur-xl">
+            <div class="bg-white p-10 rounded-xl text-center max-w-md">
+                <p id="msg" class="mb-6 text-black text-lg"></p>
+                <button onclick="closeMsg()" class="border px-8 py-3 rounded-2xl text-white bg-black hover:bg-zinc-900 transition-colors">
+                    OK
+                </button>
+            </div>
+        </div>
+    </main>
+    <div id="footer"></div>
+    <script src="/static/loadnav.js"></script>
+    <script>
+        let dbInstance = null;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                if (dbInstance) {
+                    resolve(dbInstance);
+                    return;
+                }
+
+                const request = indexedDB.open("Message", 1);
+
+                request.onupgradeneeded = function (event) {
+                    const db = event.target.result;
+
+                    if (!db.objectStoreNames.contains("user")) {
+                        const store = db.createObjectStore("user", {
+                            keyPath: "id",
+                            autoIncrement: true
+                        });
+
+                        store.createIndex("email", "email", { unique: false });
+                        store.createIndex("phone", "phone", { unique: false });
+                    } else {
+                        const store = event.target.transaction.objectStore("user");
+
+                        if (store.indexNames.contains("email")) store.deleteIndex("email");
+                        if (store.indexNames.contains("phone")) store.deleteIndex("phone");
+
+                        store.createIndex("email", "email", { unique: false });
+                        store.createIndex("phone", "phone", { unique: false });
+                    }
+                };
+
+                request.onsuccess = function (event) {
+                    dbInstance = event.target.result;
+                    resolve(dbInstance);
+                };
+
+                request.onerror = function (event) {
+                    console.error("IndexedDB open failed:", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        function showMsg(text, isError = false) {
+            const msgEl = document.getElementById("msg");
+            msgEl.textContent = text;
+            msgEl.style.color = isError ? "#ef4444" : "#22c55e";
+            document.getElementById("msgbox").classList.remove("hidden");
+        }
+
+        function closeMsg() {
+            document.getElementById("msgbox").classList.add("hidden");
+            document.getElementById("connectForm").reset();
+        }
+
+        function logout() {
+            localStorage.setItem("loggedInUser", "");
+            window.location.reload();
+        }
+
+        const usernameInput = document.getElementById("username");
+        const emailInput = document.getElementById("email");
+        const phoneInput = document.getElementById("phone");
+        const messageInput = document.getElementById("message");
+
+        const emailError = document.getElementById("emailError") || { classList: { add: () => {}, remove: () => {} }, textContent: "" };
+        const phoneError = document.getElementById("phoneError") || { classList: { add: () => {}, remove: () => {} }, textContent: "" };
+
+        const emailValidate = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneValidate = /^[0-9]{10}$/;
+
+        function validateUsername() {
+            const value = usernameInput.value.trim();
+            usernameInput.classList.remove("border-red-500", "border-green-500");
+            if (value.length === 0) return true;
+            if (value.length < 3) {
+                usernameInput.classList.add("border-red-500");
+                return false;
+            }
+            usernameInput.classList.add("border-green-500");
+            return true;
+        }
+
+        function validateEmail() {
+            const value = emailInput.value.trim();
+            emailError.classList.add("hidden");
+            emailInput.classList.remove("border-red-500", "border-green-500");
+            if (value === "") return false;
+            if (!emailValidate.test(value)) {
+                emailError.textContent = "Invalid email format";
+                emailError.classList.remove("hidden");
+                emailInput.classList.add("border-red-500");
+                return false;
+            }
+            emailInput.classList.add("border-green-500");
+            return true;
+        }
+
+        function validatePhone() {
+            const value = phoneInput.value.trim();
+            phoneError.classList.add("hidden");
+            phoneInput.classList.remove("border-red-500", "border-green-500");
+            if (value === "") return false;
+            if (!phoneValidate.test(value)) {
+                phoneError.textContent = "Phone must be exactly 10 digits";
+                phoneError.classList.remove("hidden");
+                phoneInput.classList.add("border-red-500");
+                return false;
+            }
+            phoneInput.classList.add("border-green-500");
+            return true;
+        }
+
+        phoneInput.addEventListener("input", function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 10);
+            validatePhone();
+        });
+
+        usernameInput.addEventListener("input", validateUsername);
+        emailInput.addEventListener("input", validateEmail);
+        phoneInput.addEventListener("input", validatePhone);
+        messageInput.addEventListener("input", () => {
+            if (messageInput.value.length > 1400) {
+                messageInput.classList.add("border-amber-500");
+            } else {
+                messageInput.classList.remove("border-amber-500");
+            }
+        });
+
+        async function addUserToDB(userData) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(["user"], "readwrite");
+                const store = transaction.objectStore("user");
+                const request = store.add(userData);
+
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        }
+
+        async function connect() {
+            const username = usernameInput.value.trim();
+            const email = emailInput.value.trim();
+            const phone = phoneInput.value.trim();
+            const message = messageInput.value.trim();
+
+            if (!validateUsername() || !validateEmail() || !validatePhone() || message.length === 0) {
+                showMsg("Please fill all fields correctly.", true);
+                return;
+            }
+
+            const userData = {
+                username,
+                email,
+                phone,
+                message,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                await addUserToDB(userData);
+                showMsg("Message Submitted Successfully!");
+                document.getElementById("connectForm").reset();
+            } catch (error) {
+                console.error("DB Error:", error);
+                showMsg("Failed to save message. Please try again.", true);
+            }
+        }
+
+        const islogged = localStorage.getItem("loggedInUser");
+        if (islogged) {
+            const btn = document.getElementById("btn");
+            if (btn) {
+                btn.innerHTML = `<h1 class="text-green-400 text-2xl">${islogged[0].toUpperCase()}</h1>`;
+            }
+        }
+
+        window.addEventListener("beforeunload", () => {
+            if (dbInstance) dbInstance.close();
+        });
+    </script>
+    <script src="/static/loadfooter.js"></script>
+</body>
+</html>

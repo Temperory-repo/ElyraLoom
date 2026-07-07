@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category | Men</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script> 
+</head>
+<body>
+    <div id="message" class="hidden fixed inset-0 z-50 relative flex justify-center shadow-xl bg-stone-300 p-6"></div>
+    <div id="navbar"></div>
+    <div id="msg" class="hidden fixed inset-0 z-50 flex justify-center items-center backdrop-blur-xl">
+        <div class="relative bg-white rounded-xl p-10 text-center shadow-lg">
+            <button
+                onclick="closeMsg()"
+                class="absolute top-2 right-3 text-2xl font-bold cursor-pointer">
+                &times;
+            </button>
+            <div class="flex flex-col p-5 text-center">
+                <a href="/Login" class="mb-3 hover:text-zinc-500">Login</a>
+                <span>OR</span>
+                <a href="/Sign Up" class="mt-3 hover:text-zinc-500">Sign Up</a>
+            </div>
+        </div>
+    </div>
+    <div id="men" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 p-3 gap-3 sm:gap-6"></div>
+    <div id="footer"></div>
+    <script src="/static/loadnav.js"></script>
+    <script src="/static/slpop.js"></script>
+    <script>
+        const loggedIn = isloggedIn();
+        const menContainer = document.getElementById("men");
+
+        for (let i = 1; i <= 44; i++) {
+            const price = 499 * i;
+            
+            const wishAction = loggedIn ? `wishList(this, ${i},'M',${price})` : `check()`;
+            const qtyAction = loggedIn ? `addToCart(this, ${i}, 'M', ${price})` : `check()`;
+
+            const cardHTML = `
+                <div class="group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <div class="relative">
+                        <img src="/static/collection/Men/M${i}.png" 
+                            class="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-500"
+                            alt="Men Product ${i}">
+                    </div>
+
+                    <div class="p-3 sm:p-5">
+                        <p class="text-xs text-gray-500 mb-3">Men • Regular Fit</p>
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                            <div>
+                                <span class="text-lg sm:text-2xl font-bold">₹${price}</span>
+                            </div>
+                            <button onclick="${wishAction}"
+                                class="bg-transparent border-0 p-0 m-0 cursor-pointer text-2xl text-white appearance-none">
+                                <span id="wishlistbtn" class="[-webkit-text-stroke:2px_rgba(45,42,42,0.772)] text-2xl sm:text-4xl font-bold">
+                                    &hearts;
+                                </span>
+                            </button>
+                            <button onclick="${qtyAction}" 
+                                    data-pid="${i}"
+                                    data-gender="M"
+                                    data-price="${price}"
+                                    class="addtocart cursor-pointer bg-black hover:bg-zinc-800 text-white text-xs sm:text-sm font-medium px-2 py-2 rounded-xl w-full sm:w-1/2 transition whitespace-nowrap">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            menContainer.innerHTML += cardHTML;
+        }
+    </script>
+    <script type="module" src="/static/cart.js"></script>
+    <script type="module" src="/static/addToCart.js"></script>
+    <script src="/static/loadfooter.js"></script>
+</body>
+</html>

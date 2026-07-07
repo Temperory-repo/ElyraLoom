@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Sign Up | Elyra Loom</title>
+</head>
+<body class="bg-[url(/static/signupbg.png)] bg-no-repeat bg-cover">
+    <div id="navbar"></div>
+    <main class="flex justify-center items-center min-h-screen py-10">
+        <form action="" id="signupForm" autocomplete="off" class="flex flex-col justify-center items-center h-auto border border-black rounded-4xl w-11/12 max-w-md md:max-w-lg gap-6 sm:gap-10 backdrop-blur-xl p-4">
+            <h1 class="text-center text-3xl sm:text-5xl font-bold pt-10 text-cyan-800">Sign Up</h1>
+            <input type="text" id="username" placeholder="User Name" required class="h-[60px] w-3/4 focus:outline-none placeholder:text-gray-900 text-black">
+            <input type="email" id="email" placeholder="Email" required class="h-[60px] focus:outline-none w-3/4 placeholder:text-gray-900 text-black">
+            <p id="emailError" class="hidden h-5 text-sm text-red-400 font-medium w-3/4 text-left"></p>
+            <input type="text" id="password" placeholder="Password" required class="h-[60px] w-3/4 focus:outline-none placeholder:text-gray-900 text-black ">
+            <button type="button" id="signupbtn" class="cursor-pointer text-black font-bold hover:text-purple-800" onclick="signup()">Submit</button>
+            <h4 class="pb-10">Already a User? <a href="/Login" class="hover:text-white ml-3 underline font-bold">Sign In</a></h4>
+        </form>
+        <div id="msgbox" class="hidden fixed inset-0 flex justify-center items-center bg-transparent backdrop-blur-xl">
+            <div class="bg-white p-10 rounded-xl text-center">
+                <p id="msg" class="mb-4 text-black"></p>
+                <button onclick="closeMsg()" class="border px-4 py-2 rounded-xl text-white bg-black">
+                    OK
+                </button>
+            </div>
+        </div>
+    </main>
+    <div id="footer"></div>
+    <script src="/static/loadnav.js"></script>  
+    <script>
+        let dbInstance = null;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                if (dbInstance) {
+                    resolve(dbInstance);
+                    return;
+                }
+
+                const request = indexedDB.open("Users", 2);
+
+                request.onupgradeneeded = function (event) {
+                    const db = event.target.result;
+
+                    if (!db.objectStoreNames.contains("user")) {
+                        const store = db.createObjectStore("user", {
+                            keyPath: "id",
+                            autoIncrement: true
+                        });
+
+                        store.createIndex("email", "email", { unique: true });
+                        store.createIndex("username", "username", { unique: true });
+                    } else {
+                        const transaction = event.currentTarget.transaction;
+                        const store = transaction.objectStore("user");
+
+                        if (!store.indexNames.contains("username")) {
+                            store.createIndex("username", "username", { unique: true });
+                        }
+                    }
+                };
+
+                request.onsuccess = function (event) {
+                    dbInstance = event.target.result;
+                    resolve(dbInstance);
+                };
+
+                request.onerror = function (event) {
+                    console.error("IndexedDB Error:", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        function showMsg(text, isError = false) {
+            const msgEl = document.getElementById("msg");
+            msgEl.textContent = text;
+            msgEl.style.color = isError ? "#ef4444" : "#22c55e";
+            document.getElementById("msgbox").classList.remove("hidden");
+        }
+
+        function closeMsg() {
+            document.getElementById("msgbox").classList.add("hidden");
+            window.location.reload();
+        }
+
+        function logout() {
+            localStorage.setItem("loggedInUser", "");
+            window.location.reload();
+        }
+
+        const emailError = document.getElementById("emailError");
+        const emailInput = document.getElementById("email");
+        const emailValidate = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        function validateEmail() {
+            const value = emailInput.value.trim();
+            emailError.classList.add("hidden");
+            emailInput.classList.remove("border-red-500", "border-green-500");
+
+            if (value === "") return false;
+
+            if (!emailValidate.test(value)) {
+                emailError.textContent = "Invalid email format";
+                emailError.classList.remove("hidden");
+                emailInput.classList.add("border-red-500");
+                return false;
+            } else {
+                emailInput.classList.add("border-green-500");
+                return true;
+            }
+        }
+
+        emailInput.addEventListener("input", validateEmail);
+
+        async function signup() {
+            const username = document.getElementById("username").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!username || !email || !password) {
+                showMsg("All fields are required.", true);
+                return;
+            }
+
+            if (username.length < 6) {
+                showMsg("Username must be at least 6 characters.", true);
+                return;
+            }
+
+            if (password.length < 8) {
+                showMsg("Password must be at least 8 characters.", true);
+                return;
+            }
+
+            if (!validateEmail()) {
+                showMsg("Please enter a valid email.", true);
+                return;
+            }
+
+            try {
+                const db = await openDB();
+                const transaction = db.transaction(["user"], "readwrite");
+                const store = transaction.objectStore("user");
+
+                const usernameIndex = store.index("username");
+                const emailIndex = store.index("email");
+
+                const usernameRequest = usernameIndex.get(username);
+                usernameRequest.onsuccess = function () {
+                if (usernameRequest.result) {
+                    showMsg("Username already taken.", true);
+                    return;
+                }
+
+                const emailRequest = emailIndex.get(email);
+                emailRequest.onsuccess = function () {
+                    if (emailRequest.result) {
+                        showMsg("Email already registered.", true);
+                        return;
+                    }
+
+                    const userData = {
+                        username,
+                        email,
+                        password,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    const addRequest = store.add(userData);
+
+                    addRequest.onsuccess = function () {
+                        showMsg("Account created successfully!");
+                    };
+
+                    addRequest.onerror = function (event) {
+                        console.error(event);
+                        showMsg("Failed to create account. Please try again.", true);
+                    };
+                };
+            };
+            } catch (error) {
+                console.error("Signup DB Error:", error);
+                showMsg("System error. Please try again later.", true);
+            }
+        }
+
+        function checkLoggedInUser() {
+            const islogged = localStorage.getItem("loggedInUser");
+            if (!islogged) return;
+
+            const btn = document.getElementById("btn");
+            if (btn) {
+                btn.innerHTML = `<h1 class="text-green-400 text-2xl">${islogged[0].toUpperCase()}</h1>`;
+            }
+        }
+
+        window.addEventListener("load", checkLoggedInUser);
+
+        window.addEventListener("beforeunload", () => {
+            if (dbInstance) dbInstance.close();
+        });
+    </script>
+    <script src="/static/loadfooter.js"></script>
+</body>
+</html>

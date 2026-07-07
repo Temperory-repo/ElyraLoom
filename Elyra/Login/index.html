@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+</head>
+<body class="bg-[url(/static/signupbg.png)] bg-no-repeat bg-cover">
+    <div id="navbar"></div>
+    <main class="flex justify-center items-center min-h-screen py-10">
+        <form action="" autocomplete="off" id="loginForm" class="flex flex-col justify-center items-center h-auto border border-black rounded-4xl w-11/12 max-w-md md:max-w-lg gap-6 sm:gap-10 backdrop-blur-xl p-4">
+            <h1 class="text-center text-3xl sm:text-5xl font-bold pt-10 text-cyan-800">Sign In</h1>
+            <input type="text" id="username" placeholder="User Name" required class="h-[60px] w-3/4 focus:outline-none placeholder:text-gray-800">
+            <input type="text" id="password" placeholder="Password" required class="h-[60px] w-3/4 focus:outline-none placeholder:text-gray-800">
+            <button type="button" class="cursor-pointer hover:text-white font-bold" onclick="login()">Submit</button>
+            <h4 class="pb-10">Not a User? <a href="/Sign Up" class="hover:text-white ml-3 underline font-bold">Sign Up</a></h4>
+        </form>
+    </main>
+    <div id="msgbox" class="hidden fixed inset-0 flex justify-center items-center bg-transparent backdrop-blur-xl">
+        <div class="bg-white p-10 rounded-xl text-center">
+            <p id="msg" class="mb-4"></p>
+            <button onclick="closeMsg()" class="border px-4 py-2 rounded-xl text-white bg-black">
+                OK
+            </button>
+        </div>
+    </div>
+    <div id="footer"></div>
+    <script src="/static/loadnav.js"></script>
+    <script>
+        let dbInstance = null;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                if (dbInstance) {
+                    resolve(dbInstance);
+                    return;
+                }
+
+                const request = indexedDB.open("Users", 3);
+
+                request.onupgradeneeded = function (event) {
+                    const db = event.target.result;
+
+                    if (!db.objectStoreNames.contains("user")) {
+                        const store = db.createObjectStore("user", {
+                            keyPath: "id",
+                            autoIncrement: true
+                        });
+
+                        store.createIndex("email", "email", { unique: true });
+                        store.createIndex("username", "username", { unique: true });
+                    } else {
+                        const transaction = event.currentTarget.transaction;
+                        const store = transaction.objectStore("user");
+
+                        if (!store.indexNames.contains("username")) {
+                            store.createIndex("username", "username", { unique: true });
+                        }
+                    }
+                };
+
+                request.onsuccess = function (event) {
+                    dbInstance = event.target.result;
+                    resolve(dbInstance);
+                };
+
+                request.onerror = function (event) {
+                    console.error("IndexedDB Error:", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        function showMsg(text, isError = false) {
+            const msgEl = document.getElementById("msg");
+            msgEl.textContent = text;
+            msgEl.style.color = isError ? "#ef4444" : "#22c55e";
+            document.getElementById("msgbox").classList.remove("hidden");
+        }
+
+        function closeMsg() {
+            document.getElementById("msgbox").classList.add("hidden");
+            window.location.reload(); 
+        }
+
+        function logout() {
+            localStorage.setItem("loggedInUser", "");
+            window.location.reload();
+        }
+
+        async function login() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!username || !password) {
+                showMsg("Username and password are required.", true);
+                return;
+            }
+
+            try {
+                const db = await openDB();
+                const transaction = db.transaction(["user"], "readonly");
+                const store = transaction.objectStore("user");
+                const index = store.index("username");
+                const logged = localStorage.getItem("loggedInUser");
+
+                const request = index.get(username);
+
+                request.onsuccess = function () {
+                    const user = request.result;
+
+                    if (!user || user.password !== password) {
+                        showMsg("Invalid credentials", true);
+                        return;
+                    }
+
+                    if(!logged){
+                        localStorage.setItem("loggedInUser", username);
+                        showMsg("Login successful!");
+                        return;
+                    }
+                };
+
+                request.onerror = function () {
+                    showMsg("Login failed. Please try again.", true);
+                };
+            } catch (error) {   
+                console.error("DB Error during login:", error);
+                showMsg("System error. Please try again later.", true);
+            }
+        }
+    </script>   
+    <script src="/static/loadfooter.js"></script>
+</body>
+</html>
