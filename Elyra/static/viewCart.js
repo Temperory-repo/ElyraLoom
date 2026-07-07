@@ -71,7 +71,7 @@ export async function viewItems() {
                 <div class="flex justify-between items-center border-b py-4">
                     <div>
                         <img
-                            src="/static/collection/mix/${item.id}.png"
+                            src="/static/collection/mix/${item.id}.webp"
                             class="w-24 rounded-lg"
                         >
                     </div>

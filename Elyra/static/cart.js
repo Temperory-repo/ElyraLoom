@@ -213,7 +213,7 @@ async function Check(islogged) {
                 const cardHTML = `
                     <div class="group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div class="relative">
-                            <img src="/static/collection/mix/${item.id}.png" 
+                            <img src="/static/collection/mix/${item.id}.webp" 
                                  class="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-500" 
                                  alt="Product ${item.id}">
                         </div>

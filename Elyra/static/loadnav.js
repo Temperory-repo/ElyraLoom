@@ -10,7 +10,7 @@ fetch("/templates/navbar.html")
 
         const accImg = document.getElementById("accimg");
         if (accImg) {
-            accImg.src = "/static/guestacc.png";
+            accImg.src = "/static/guestacc.webp";
         }
         function updateAccountUI(username) {
             const accImage = document.getElementById("accimage");
