@@ -10,7 +10,7 @@ fetch("/templates/navbar.html")
 
         const accImg = document.getElementById("accimg");
         if (accImg) {
-            accImg.src = "/static/guestacc.webp";
+            accImg.src = "/static/guestacc.png";
         }
         function updateAccountUI(username) {
             const accImage = document.getElementById("accimage");
@@ -54,4 +54,31 @@ fetch("/templates/navbar.html")
             }
         }
         checkLoggedInUser();
+
+        // Hover on desktop (via CSS md:group-hover:flex), click on mobile
+        const accImageEl = document.getElementById("accimage");
+        const menuEl = document.getElementById("dropdownMenu");
+        const isMobile = () => window.matchMedia("(max-width: 767px)").matches;
+        if (accImageEl && menuEl) {
+            accImageEl.addEventListener("click", (e) => {
+                if (!isMobile()) return;
+                e.stopPropagation();
+                menuEl.classList.toggle("hidden");
+                menuEl.classList.toggle("flex");
+            });
+            document.addEventListener("click", (e) => {
+                if (!isMobile()) return;
+                if (!menuEl.contains(e.target) && !accImageEl.contains(e.target)) {
+                    menuEl.classList.add("hidden");
+                    menuEl.classList.remove("flex");
+                }
+            });
+            // Reset inline state when crossing breakpoint so desktop hover works
+            window.addEventListener("resize", () => {
+                if (!isMobile()) {
+                    menuEl.classList.add("hidden");
+                    menuEl.classList.remove("flex");
+                }
+            });
+        }
     });
