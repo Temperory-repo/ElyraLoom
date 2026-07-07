@@ -225,7 +225,7 @@ async function Check(islogged) {
                                 <div class="flex items-center gap-1">
                                     <button onclick="wishList(this, ${productId}, '${item.gender}', ${item.price})" 
                                             class="bg-transparent border-0 p-0 m-0 cursor-pointer text-2xl text-white appearance-none">
-                                        <span class="[-webkit-text-stroke:2px_rgba(45,42,42,0.772)] text-4xl font-bold text-red-500">♥</span>
+                                        <span class="[-webkit-text-stroke:2px_rgba(45,42,42,0.772)] text-4xl font-bold text-red-500">&#x2665;&#xFE0E;</span>
                                     </button>
                                     <button onclick="addToCart(this, ${productId}, '${item.gender}', ${item.price})" 
                                             data-pid="${productId}"

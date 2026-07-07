@@ -1,0 +1,7 @@
+/* Force ♥ to use text color (white/red), not mobile emoji red */
+.wishlist-heart {
+    -webkit-text-stroke: 2px rgba(45, 42, 42, 0.772);
+    -webkit-text-fill-color: currentColor;
+    font-variant-emoji: text;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+}
